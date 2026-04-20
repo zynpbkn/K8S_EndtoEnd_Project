@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+httpx
+langchain
+langchain-google-genai
+langchain-community
+langchain-chroma
+langchain-core
+chromadb==0.5.20
+psycopg2-binary
+pdfplumber
+pypdf
+pymupdf
+PyPDF2
+prometheus-fastapi-instrumentator
+python-multipart

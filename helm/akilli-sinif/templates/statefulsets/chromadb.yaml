@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: chromadb
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+    app: chromadb
+spec:
+  serviceName: chromadb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chromadb
+  template:
+    metadata:
+      labels:
+        app: chromadb
+    spec:
+      containers:
+        - name: chromadb
+          image: "{{ .Values.chromadb.image.repository }}:{{ .Values.chromadb.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 8000
+          env:
+            - name: IS_PERSISTENT
+              value: "TRUE"
+            - name: PERSIST_DIRECTORY
+              value: "/chroma/data"
+          volumeMounts:
+            - name: chromadb-data
+              mountPath: /chroma/data
+          resources:
+            {{- toYaml .Values.chromadb.resources | nindent 12 }}
+      volumes:
+        - name: chromadb-data
+          persistentVolumeClaim:
+            claimName: chromadb-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chromadb
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: chromadb
+  ports:
+    - port: {{ .Values.chromadb.service.port }}
+      targetPort: 8000

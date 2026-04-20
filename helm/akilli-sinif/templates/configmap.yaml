@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: akilli-sinif-config
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+data:
+  LOG_LEVEL:          {{ .Values.config.logLevel | quote }}
+  MAX_QUIZ_QUESTIONS: {{ .Values.config.maxQuizQuestions | quote }}
+  EMBEDDING_MODEL:    {{ .Values.config.embeddingModel | quote }}
+  GEMINI_MODEL:       {{ .Values.config.geminiModel | quote }}
+  CHROMA_HOST:        {{ .Values.config.chromaHost | quote }}
+  CHROMA_PORT:        {{ .Values.config.chromaPort | quote }}
+  POSTGRES_HOST:      {{ .Values.config.postgresHost | quote }}
+  POSTGRES_PORT:      {{ .Values.config.postgresPort | quote }}
+  POSTGRES_DB:        {{ .Values.config.postgresDb | quote }}
+  POSTGRES_USER:      {{ .Values.config.postgresUser | quote }}
+
+  # ------
+  EMBEDDING_SERVICE_PORT: {{ .Values.config.embeddingServicePortNum | quote }}
+  EMBEDDING_SERVICE_HOST: {{ .Values.config.embeddingServiceHost | quote }}
+  QUIZ_SERVICE_PORT:      {{ .Values.config.quizServicePortNum | quote }}
+  QUIZ_SERVICE_HOST:      {{ .Values.config.quizServiceHost | quote }}
+  PROGRESS_SERVICE_PORT:  {{ .Values.config.progressServicePortNum | quote }}
+  PROGRESS_SERVICE_HOST:  {{ .Values.config.progressServiceHost | quote }}

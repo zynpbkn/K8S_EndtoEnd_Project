@@ -1,0 +1,21 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgresql
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+spec:
+  instances: 1
+  storage:
+    size: 10Gi
+    storageClass: hostpath
+  bootstrap:
+    initdb:
+      database: akilli_sinif
+      owner: appuser
+      secret:
+        name: akilli-sinif-secret
+  postgresql:
+    parameters:
+      max_connections: "100"

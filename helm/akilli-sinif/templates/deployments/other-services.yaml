@@ -1,0 +1,124 @@
+# ─── Embedding Service ─────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embedding-service
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+    app: embedding-service
+spec:
+  replicas: {{ .Values.embeddingService.replicaCount }}
+  selector:
+    matchLabels:
+      app: embedding-service
+  template:
+    metadata:
+      labels:
+        app: embedding-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8002"
+    spec:
+      initContainers:
+        - name: wait-for-chromadb
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z chromadb 8000; do echo 'ChromaDB bekleniyor...'; sleep 3; done; echo 'ChromaDB hazır!'"]
+      containers:
+        - name: embedding-service
+          image: "{{ .Values.embeddingService.image.repository }}:{{ .Values.embeddingService.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: akilli-sinif-config
+          env:
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: akilli-sinif-secret
+                  key: GEMINI_API_KEY
+          resources:
+            {{- toYaml .Values.embeddingService.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: embedding-service
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: embedding-service
+  ports:
+    - port: {{ .Values.embeddingService.service.port }}
+      targetPort: 8000
+---
+# ─── Progress Service ──────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: progress-service
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+    app: progress-service
+spec:
+  replicas: {{ .Values.progressService.replicaCount }}
+  selector:
+    matchLabels:
+      app: progress-service
+  template:
+    metadata:
+      labels:
+        app: progress-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8003"
+    spec:
+      initContainers:
+        - name: wait-for-postgresql
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z {{ .Values.config.postgresHost }} 5432; do echo 'PostgreSQL bekleniyor...'; sleep 3; done; echo 'PostgreSQL hazır!'"]
+      containers:
+        - name: progress-service
+          image: "{{ .Values.progressService.image.repository }}:{{ .Values.progressService.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: akilli-sinif-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: akilli-sinif-secret
+                  key: POSTGRES_PASSWORD
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: akilli-sinif-secret
+                  key: GEMINI_API_KEY      
+          resources:
+            {{- toYaml .Values.progressService.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: progress-service
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: progress-service
+  ports:
+    - port: {{ .Values.progressService.service.port }}
+      targetPort: 8000

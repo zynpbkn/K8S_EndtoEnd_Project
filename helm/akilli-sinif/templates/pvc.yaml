@@ -1,0 +1,21 @@
+# PostgreSQL PVC → Bitnami Helm chart kendi yönetiyor, burada YOK.
+# Prometheus PVC → kube-prometheus-stack kendi yönetiyor, burada YOK.
+
+# ─── ChromaDB PVC ─────────────────────────────────────────────────
+# ChromaDB'nin kendi Helm chart'ı olmadığı için PVC'yi biz yönetiyoruz.
+# Embedding vektörleri burada kalıcı olarak saklanır.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chromadb-data
+  namespace: {{ include "akilli-sinif.namespace" . }}
+  labels:
+    {{- include "akilli-sinif.labels" . | nindent 4 }}
+    app: chromadb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.chromadb.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.chromadb.persistence.size }}

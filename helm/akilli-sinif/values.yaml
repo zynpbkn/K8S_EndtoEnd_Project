@@ -1,0 +1,265 @@
+# =============================================
+# AkıllıSınıf - Helm Values
+# Tüm ayarlar burada. Helm dependency'ler de
+# buradan konfigüre edilir.
+# =============================================
+
+global:
+  namespace: akilli-sinif
+  imageRegistry: ""         
+  imagePullPolicy: IfNotPresent
+
+# ─── API Gateway ──────────────────────────
+apiGateway:
+  replicaCount: 1
+  image:
+    repository: akilli-sinif/api-gateway
+    tag: "v1"
+  service:
+    type: NodePort
+    port: 8000
+    nodePort: 30800
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
+# ─── Quiz Service ─────────────────────────
+quizService:
+  replicaCount: 1
+  image:
+    repository: akilli-sinif/quiz-service
+    tag: "v1"
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# ─── Embedding Service ────────────────────
+embeddingService:
+  replicaCount: 1
+  image:
+    repository: akilli-sinif/embedding-service
+    tag: "v1"
+  service:
+    type: ClusterIP
+    port: 8002
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# ─── Progress Service ─────────────────────
+progressService:
+  replicaCount: 1
+  image:
+    repository: akilli-sinif/progress-service
+    tag: "v1"
+  service:
+    type: ClusterIP
+    port: 8003
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
+# ─── ChromaDB ─────────────────────────────
+chromadb:
+  image:
+    repository: chromadb/chroma
+    tag: "0.5.23"
+  service:
+    type: ClusterIP
+    port: 8000
+  persistence:
+    size: 20Gi
+    storageClass: "hostpath"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# ─── HPA ──────────────────────────────────
+hpa:
+  quizService:
+    minReplicas: 2
+    maxReplicas: 6
+    cpuUtilization: 70
+  embeddingService:
+    minReplicas: 1
+    maxReplicas: 4
+    cpuUtilization: 70
+
+# ─── ConfigMap değerleri ──────────────────
+config:
+  logLevel: "INFO"
+  maxQuizQuestions: 10
+  embeddingModel: "gemini-embedding-2-preview"
+  geminiModel: "gemini-2.5-flash"
+  chromaHost: "chromadb"
+  chromaPort: "8000"
+  # postgresql dependency adı prefix olarak gelir: akilli-sinif-postgresql
+  postgresHost: "postgresql-rw"
+  postgresPort: "5432"
+  postgresDb: "akilli_sinif"
+  postgresUser: "appuser"
+
+  # ------
+  embeddingServiceHost: "embedding-service"
+  embeddingServicePortNum: "8002"
+  quizServiceHost: "quiz-service"
+  quizServicePortNum: "8001"
+  progressServiceHost: "progress-service"
+  progressServicePortNum: "8003"
+
+# ─── Secret  ──
+secret:
+  geminiApiKey: ""
+  postgresPassword: ""
+
+# ══════════════════════════════════════════
+# HELM DEPENDENCY: PostgreSQL (Bitnami)
+# Dökümantasyon: https://artifacthub.io/packages/helm/bitnami/postgresql
+# ══════════════════════════════════════════
+postgresql:
+  enabled: false
+  auth:
+    database: akilli_sinif
+    username: appuser
+    password: "sifre123"
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: "hostpath"
+    initdb:
+      scriptsConfigMap: akilli-sinif-init-sql
+  service:
+    type: ClusterIP
+    port: 5432
+# ══════════════════════════════════════════
+# HELM DEPENDENCY: kube-prometheus-stack
+# Prometheus + Grafana + AlertManager
+# Dökümantasyon: https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
+# ══════════════════════════════════════════
+monitoring:
+  enabled: false
+
+kube-prometheus-stack:
+  # ─── Grafana ────────────────────────────
+  grafana:
+    enabled: true
+    adminPassword: "admin123"     # prod'da değiştir!
+    service:
+      type: NodePort
+      nodePort: 30300             # http://localhost:30300
+    # Prometheus veri kaynağı otomatik eklenir
+    # Akıllı Sınıf dashboard'u provision edilir
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: akilli-sinif
+            folder: AkıllıSınıf
+            type: file
+            options:
+              path: /var/lib/grafana/dashboards/akilli-sinif
+    dashboards:
+      akilli-sinif:
+        overview:
+          json: |
+            {
+  "title": "AkıllıSınıf Genel Bakış",
+  "panels": [
+    {
+      "title": "Üretilen Quiz",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(akilli_sinif_quiz_generated_total)"
+        }
+      ]
+    },
+    {
+      "title": "Skor Dağılımı",
+      "type": "histogram",
+      "targets": [
+        {
+          "expr": "akilli_sinif_quiz_scores_bucket"
+        }
+      ]
+    },
+    {
+      "title": "LLM Yanıt Süresi",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(akilli_sinif_llm_seconds_sum[5m])"
+        }
+      ]
+    },
+    {
+      "title": "Zayıf Konular",
+      "type": "bar",
+      "targets": [
+        {
+          "expr": "topk(5, akilli_sinif_weak_topics_total)"
+        }
+      ]
+    }
+  ]
+}
+
+  # ─── Prometheus ─────────────────────────
+  prometheus:
+    enabled: true
+    service:
+      type: NodePort
+      nodePort: 30900             # http://localhost:30900
+    prometheusSpec:
+      # akilli-sinif namespace'indeki pod'ları tara
+      podMonitorNamespaceSelector:
+        matchNames:
+          - akilli-sinif
+      serviceMonitorNamespaceSelector:
+        matchNames:
+          - akilli-sinif
+      retention: 7d
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: hostpath
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 5Gi
+
+  # ─── AlertManager ───────────────────────
+  alertmanager:
+    enabled: false              
+
+  # ─── Node Exporter ──────────────────────
+  nodeExporter:
+    enabled: true               # CPU/memory/disk metrikleri
+
+  # ─── Kube State Metrics ─────────────────
+  kubeStateMetrics:
+    enabled: true               # Pod/Deployment durumları
