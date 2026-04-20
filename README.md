@@ -82,5 +82,5 @@ Grafana:    http://localhost:30300   (admin / admin123)
 Prometheus: http://localhost:30900
 streamlit : streamlit run streamlit/app.py --server.address 0.0.0.0
 ```
-👩‍🏫 Geliştirici Notu
+## 👩‍🏫 Geliştirici Notu
 Zeynep Bakan tarafından, eğitimde yapay zeka ve modern altyapı çözümlerini birleştirmek amacıyla geliştirilmiştir. Matematik öğretmenliğinden LLM & Kubernetese'e uzanan bu yolculuğun en somut çıktısıdır. 🎓🚀
