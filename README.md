@@ -1,6 +1,6 @@
 # 📚 AkıllıSınıf — Kubernetes Bootcamp Bitirme Projesi
 
-**AkıllıSınıf**, öğrenciler için ders notlarından RAG (Retrieval-Augmented Generation) kullanarak otomatik quizler üreten, sonuçları **Gemini 2.5 Flash** ile analiz eden ve gelişim takibi yapan uçtan uca bir **Kubernetes tabanlı bir LLM** projesidir.
+**AkıllıSınıf**, öğrenciler için ders notlarından RAG (Retrieval-Augmented Generation) kullanarak otomatik quizler üreten, sonuçları **Gemini 2.5 Flash** ile analiz eden ve gelişim takibi yapan uçtan uca bir **Kubernetes tabanlı bir LLM** projesidir. Eğitimde fırsat eşitliği yaratmak ve öğretmenlerin öğrenci takibini saniyeler içinde yapabilmesini sağlamak amacıyla geliştirilmiştir.
 
 ## 🚀 Her Şey Helm ile Kurulur
 Proje, tek bir komutla tüm bağımlılıkları (dependencies) içerecek şekilde ayağa kalkar:
