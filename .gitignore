@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Helm bağımlılıklarını (charts/*.tgz) GitHub'a gönderme
+helm/akilli-sinif/charts/*.tgz
+helm/akilli-sinif/charts/*.tar.gz
+
+# Geçici dosyalar ve loglar
+*.log
+.DS_Store
