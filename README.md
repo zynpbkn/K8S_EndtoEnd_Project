@@ -52,11 +52,12 @@ Otomatik kurulanlar:
 
 ```bash
 # 1. Repo ekle
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+# CloudNative-PG Operatörünü kurun
 helm install cnpg oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg \
   --namespace cnpg-system \
   --create-namespace
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
 
 # 2. Dependency indir
 cd helm/akilli-sinif && helm dependency update
@@ -70,10 +71,10 @@ docker build -t akilli-sinif/quiz-service:v1      ./services/quiz-service/
 docker build -t akilli-sinif/embedding-service:v1 ./services/embedding-service/
 docker build -t akilli-sinif/progress-service:v1  ./services/progress-service/
 
-# 5. Kur
-helm install akilli-sinif ./helm/akilli-sinif \
-  --namespace akilli-sinif \
-  --set secret.geminiApiKey="AIza..." \
+# 5.Projeyi her şeyiyle (App + DB + Monitoring) tek komutla ayağa kaldırın
+helm upgrade --install akilli-sinif ./helm/akilli-sinif \
+  -n akilli-sinif --create-namespace \
+  --set secret.geminiApiKey="API_KEY_BURAYA" \
   --set secret.postgresPassword="sifre123"
 ```
 
