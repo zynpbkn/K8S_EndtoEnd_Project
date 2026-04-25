@@ -52,7 +52,9 @@ Otomatik kurulanlar:
 
 ```bash
 # 1. Repo ekle
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install cnpg oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg \
+  --namespace cnpg-system \
+  --create-namespace
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 
